@@ -20,13 +20,7 @@ public class TransactionController {
      @PostMapping("/addTransaction")
    //Add or create employee REST API
     public ResponseEntity<TransactionDTO> createTransaction(@RequestBody TransactionDTO transactionDTO) {
-        System.out.println(transactionDTO.getCreated_date());
-        System.out.println(transactionDTO.getTransaction_date());
-        System.out.println(transactionDTO.getDescription());
-        System.out.println(transactionDTO.getAmount());
-        System.out.println(transactionDTO.getPaidby());
-        System.out.println(transactionDTO.getMaincategory());
-        System.out.println(transactionDTO.getSubcategory());
+
         TransactionDTO savedTransaction = transactionService.createTransaction(transactionDTO);
         return new ResponseEntity<TransactionDTO>(savedTransaction, HttpStatus.CREATED);
     }
