@@ -1,9 +1,12 @@
 package com.expense.tracker.Service.Implementations;
 
+import com.expense.tracker.DTO.SummaryDTO;
 import com.expense.tracker.DTO.TransactionDTO;
 import com.expense.tracker.Exception.ResourceNotFound;
+import com.expense.tracker.Mapper.SummaryMapper;
 import com.expense.tracker.Mapper.TransactionMapper;
 
+import com.expense.tracker.Model.SummaryModel;
 import com.expense.tracker.Model.TransactionModel;
 import com.expense.tracker.Repository.TransactionRepository;
 import com.expense.tracker.Service.Interfaces.TransactionService;
@@ -79,6 +82,36 @@ public class TransactionServicesImpl implements TransactionService {
         transactionRepository.deleteById(id);
     }
 
+    @Override
+    public SummaryDTO calculateSummary(LocalDate startDate, LocalDate endDate) {
+
+        List<TransactionModel> transactionModel = (List<TransactionModel>) transactionRepository.findBytransactionOnBetween(startDate, endDate);
+        if(transactionModel == null){
+            throw new RuntimeException("check the query as the values are empty");
+        }
+
+        double totalExpenses = transactionModel.stream()
+                .filter(t -> t.getMaincategory().equals("Expense"))
+                .mapToDouble(TransactionModel::getAmount).sum();
+
+
+        double totalIncome = transactionModel.stream()
+                .filter(t -> t.getMaincategory().equals("Income"))
+                .mapToDouble(TransactionModel::getAmount)
+                .sum();
+
+        double balance = totalIncome - totalExpenses;
+        System.out.println("Calculating summary from the query data");
+        System.out.print(totalIncome);System.out.print(totalExpenses);System.out.print(balance);
+
+        SummaryModel summaryModel = new SummaryModel(totalIncome, totalExpenses, balance);
+        summaryModel.settotalIncome(totalIncome);
+        summaryModel.setTotalExpense(totalExpenses);
+        summaryModel.setBalance(balance);
+
+        return SummaryMapper.mapToSummaryDTO(summaryModel);
+
+    }
 
 
 }

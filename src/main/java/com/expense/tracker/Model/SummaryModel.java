@@ -1,11 +1,11 @@
-package com.expense.tracker.DTO;
+package com.expense.tracker.Model;
 
-public class SummaryDTO {
+public class SummaryModel {
     public double totalIncome;
     public double totalExpense;
     public double balance;
 
-    public SummaryDTO(double totalIncome, double totalExpense, double balance) {
+    public SummaryModel(double totalIncome, double totalExpense, double balance) {
         this.totalIncome = totalIncome;
         this.totalExpense = totalExpense;
         this.balance = balance;
