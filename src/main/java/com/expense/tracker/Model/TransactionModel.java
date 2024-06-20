@@ -2,6 +2,7 @@ package com.expense.tracker.Model;
 
 import jakarta.persistence.*;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -17,12 +18,13 @@ public class TransactionModel {
     @Column(name = "created_date", columnDefinition = "TIMESTAMP WITHOUT TIME ZONE")
     LocalDateTime created_date;
 
-    int transaction_date;
+
     String description;
     double amount;
     String paidby;
     String maincategory;
     String subcategory;
+    LocalDate transactionOn;
 
 
     //No Arg constructor
@@ -33,15 +35,15 @@ public class TransactionModel {
     //All arg constructor
 
 
-    public TransactionModel(Long id, LocalDateTime created_date, int transaction_date, String description, double amount, String paidby, String maincategory, String subcategory) {
+    public TransactionModel(Long id, LocalDateTime created_date, String description, double amount, String paidby, String maincategory, String subcategory, LocalDate transactionOn) {
         this.id = id;
         this.created_date = created_date;
-        this.transaction_date = transaction_date;
         this.description = description;
         this.amount = amount;
         this.paidby = paidby;
         this.maincategory = maincategory;
         this.subcategory = subcategory;
+        this.transactionOn = transactionOn;
     }
 
     public Long getId() {
@@ -58,14 +60,6 @@ public class TransactionModel {
 
     public void setCreated_date(LocalDateTime created_date) {
         this.created_date = created_date;
-    }
-
-    public int getTransaction_date() {
-        return transaction_date;
-    }
-
-    public void setTransaction_date(int transaction_date) {
-        this.transaction_date = transaction_date;
     }
 
     public String getDescription() {
@@ -106,5 +100,13 @@ public class TransactionModel {
 
     public void setSubcategory(String subcategory) {
         this.subcategory = subcategory;
+    }
+
+    public LocalDate getTransactionOn() {
+        return transactionOn;
+    }
+
+    public void setTransactionOn(LocalDate transactionOn) {
+        this.transactionOn = transactionOn;
     }
 }

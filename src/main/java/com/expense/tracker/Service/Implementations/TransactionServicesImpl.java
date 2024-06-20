@@ -58,7 +58,7 @@ public class TransactionServicesImpl implements TransactionService {
 
         TransactionModel transactionModel=transactionRepository.findById(id).orElseThrow(()-> new ResourceNotFound("The transaction is not exist"+id));
 
-        transactionModel.setTransaction_date(updatedTransaction.getTransaction_date());
+        transactionModel.setTransactionOn(updatedTransaction.getTransactionOn());
         transactionModel.setDescription(updatedTransaction.getDescription());
         transactionModel.setAmount(updatedTransaction.getAmount());
         transactionModel.setPaidby(updatedTransaction.getPaidby());
