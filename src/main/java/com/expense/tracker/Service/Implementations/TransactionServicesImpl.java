@@ -1,5 +1,6 @@
 package com.expense.tracker.Service.Implementations;
 
+import com.expense.tracker.DTO.ReportDTO;
 import com.expense.tracker.DTO.SummaryDTO;
 import com.expense.tracker.DTO.TransactionDTO;
 import com.expense.tracker.Exception.ResourceNotFound;
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -112,6 +114,44 @@ public class TransactionServicesImpl implements TransactionService {
         return SummaryMapper.mapToSummaryDTO(summaryModel);
 
     }
+
+    @Override
+    public ReportDTO getMonthlyReport(int year, int month) {
+
+
+
+        if (month < 1 || month > 12) {
+            System.out.println("month is :"+month);
+            throw new ResourceNotFound("Invalid month data ");
+        }
+
+
+        System.out.println("Start date is executing");
+        LocalDate startDate = LocalDate.of(year, month, 1);
+
+        System.out.println("End date is executing: is ");
+        LocalDate endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
+
+        List<TransactionModel> transactions = transactionRepository.findBytransactionOnBetween(startDate, endDate);
+
+        double totalIncome = transactions.stream()
+                .filter(t -> t.getMaincategory().equalsIgnoreCase("income"))
+                .mapToDouble(TransactionModel::getAmount)
+                .sum();
+
+        double totalExpenses = transactions.stream()
+                .filter(t -> t.getMaincategory().equalsIgnoreCase("expense"))
+                .mapToDouble(TransactionModel::getAmount)
+                .sum();
+
+        Map<String, Double> categoryBreakdown = transactions.stream()
+                .filter(t -> t.getMaincategory().equalsIgnoreCase("expense"))
+                .collect(Collectors.groupingBy(TransactionModel::getSubcategory, Collectors.summingDouble(TransactionModel::getAmount)));
+
+        return new ReportDTO(totalIncome, totalExpenses, categoryBreakdown);
+    }
+
+
 
 
 }
