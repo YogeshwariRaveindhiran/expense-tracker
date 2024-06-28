@@ -4,9 +4,11 @@ import com.expense.tracker.DTO.ReportDTO;
 import com.expense.tracker.DTO.SummaryDTO;
 import com.expense.tracker.DTO.TransactionDTO;
 import com.expense.tracker.Exception.ResourceNotFound;
+import com.expense.tracker.Mapper.ReportMapper;
 import com.expense.tracker.Mapper.SummaryMapper;
 import com.expense.tracker.Mapper.TransactionMapper;
 
+import com.expense.tracker.Model.ReportModel;
 import com.expense.tracker.Model.SummaryModel;
 import com.expense.tracker.Model.TransactionModel;
 import com.expense.tracker.Repository.TransactionRepository;
@@ -118,18 +120,12 @@ public class TransactionServicesImpl implements TransactionService {
     @Override
     public ReportDTO getMonthlyReport(int year, int month) {
 
-
-
         if (month < 1 || month > 12) {
             System.out.println("month is :"+month);
             throw new ResourceNotFound("Invalid month data ");
         }
 
-
-        System.out.println("Start date is executing");
         LocalDate startDate = LocalDate.of(year, month, 1);
-
-        System.out.println("End date is executing: is ");
         LocalDate endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
 
         List<TransactionModel> transactions = transactionRepository.findBytransactionOnBetween(startDate, endDate);
@@ -140,18 +136,17 @@ public class TransactionServicesImpl implements TransactionService {
                 .sum();
 
         double totalExpenses = transactions.stream()
-                .filter(t -> t.getMaincategory().equalsIgnoreCase("expense"))
+                .filter(t -> t.getMaincategory().equalsIgnoreCase("Expense"))
                 .mapToDouble(TransactionModel::getAmount)
                 .sum();
 
         Map<String, Double> categoryBreakdown = transactions.stream()
-                .filter(t -> t.getMaincategory().equalsIgnoreCase("expense"))
+                .filter(t -> t.getMaincategory().equalsIgnoreCase("Expense"))
                 .collect(Collectors.groupingBy(TransactionModel::getSubcategory, Collectors.summingDouble(TransactionModel::getAmount)));
 
-        return new ReportDTO(totalIncome, totalExpenses, categoryBreakdown);
+        double balance = totalIncome-totalExpenses;
+
+        ReportModel reportModel = new ReportModel(totalIncome, totalExpenses, balance, categoryBreakdown);
+        return ReportMapper.mapToReportDTO(reportModel);
     }
-
-
-
-
 }

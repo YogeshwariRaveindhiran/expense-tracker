@@ -23,10 +23,7 @@ public class ReportController {
     //Monthly Expense
     @GetMapping("/{year}/{month}")
     public ResponseEntity<ReportDTO> getMonthlyReport(@PathVariable("year") int year, @PathVariable("month")int month){
-        System.out.println("Report Controller started pingging");
         ReportDTO reportDTO = transactionService.getMonthlyReport(year,month);
-        System.out.println("Report Controller once before ending............");
-        //System.out.println(reportDTO.totalIncome);System.out.println(summaryDTO.totalExpense);System.out.println(summaryDTO.balance);
         return ResponseEntity.ok(reportDTO);
     }
 }
