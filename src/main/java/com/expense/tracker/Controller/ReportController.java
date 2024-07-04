@@ -1,10 +1,12 @@
 package com.expense.tracker.Controller;
 
+import com.expense.tracker.DTO.ComparisonReportDTO;
 import com.expense.tracker.DTO.ReportDTO;
 import com.expense.tracker.DTO.TransactionDTO;
 import com.expense.tracker.Service.Interfaces.TransactionService;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -47,6 +49,18 @@ public class ReportController {
 
         List<TransactionDTO> transactionReport = transactionService.getTransactionsReport(startDate, endDate);
         return ResponseEntity.ok(transactionReport);
+    }
+
+    @GetMapping("/comparison-report")
+    public ResponseEntity<ComparisonReportDTO> getComparisonReport(
+            @RequestParam("month1") @DateTimeFormat(pattern="yyyy-MM") String month1,
+            @RequestParam("month2") @DateTimeFormat(pattern="yyyy-MM") String month2) {
+
+        LocalDate month1Date = LocalDate.parse(month1 + "-01");
+        LocalDate month2Date = LocalDate.parse(month2 + "-01");
+
+        ComparisonReportDTO comparisonReport = transactionService.getComparisonReport(month1Date, month2Date);
+        return ResponseEntity.ok(comparisonReport);
     }
 
 }

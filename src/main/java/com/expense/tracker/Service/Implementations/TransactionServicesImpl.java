@@ -1,8 +1,6 @@
 package com.expense.tracker.Service.Implementations;
 
-import com.expense.tracker.DTO.ReportDTO;
-import com.expense.tracker.DTO.SummaryDTO;
-import com.expense.tracker.DTO.TransactionDTO;
+import com.expense.tracker.DTO.*;
 import com.expense.tracker.Exception.ResourceNotFound;
 import com.expense.tracker.Mapper.ReportMapper;
 import com.expense.tracker.Mapper.SummaryMapper;
@@ -18,8 +16,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -167,6 +164,44 @@ public class TransactionServicesImpl implements TransactionService {
                 .collect(Collectors.toList());
 
     }
+
+    //Comparison Report
+
+    @Override
+    public ComparisonReportDTO getComparisonReport(LocalDate month1, LocalDate month2) {
+        LocalDate month1Start = month1.withDayOfMonth(1);
+        LocalDate month1End = month1.withDayOfMonth(month1.lengthOfMonth());
+
+        LocalDate month2Start = month2.withDayOfMonth(1);
+        LocalDate month2End = month2.withDayOfMonth(month2.lengthOfMonth());
+
+        List<TransactionModel> transactionsMonth1 = transactionRepository.findBytransactionOnBetween(month1Start, month1End);
+        List<TransactionModel> transactionsMonth2 = transactionRepository.findBytransactionOnBetween(month2Start, month2End);
+
+        Map<String, Double> categoryToAmountMonth1 = transactionsMonth1.stream()
+                .filter(t -> t.getMaincategory().equalsIgnoreCase("Expense"))
+                .collect(Collectors.groupingBy(TransactionModel::getSubcategory, Collectors.summingDouble(TransactionModel::getAmount)));
+
+        Map<String, Double> categoryToAmountMonth2 = transactionsMonth2.stream()
+                .filter(t -> t.getMaincategory().equalsIgnoreCase("Expense"))
+                .collect(Collectors.groupingBy(TransactionModel::getSubcategory, Collectors.summingDouble(TransactionModel::getAmount)));
+
+        Set<String> allCategories = new HashSet<>();
+        allCategories.addAll(categoryToAmountMonth1.keySet());
+        allCategories.addAll(categoryToAmountMonth2.keySet());
+
+        List<CategoryComparisonDTO> categoryComparisons = new ArrayList<>();
+        for (String category : allCategories) {
+            double month1Amount = categoryToAmountMonth1.getOrDefault(category, 0.0);
+            double month2Amount = categoryToAmountMonth2.getOrDefault(category, 0.0);
+            double difference = month2Amount - month1Amount;
+
+            categoryComparisons.add(new CategoryComparisonDTO(category, month1Amount, month2Amount, difference));
+        }
+
+        return new ComparisonReportDTO(categoryComparisons);
+    }
+
 
 
 }

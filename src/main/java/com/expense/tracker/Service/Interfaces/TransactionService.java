@@ -1,6 +1,7 @@
 package com.expense.tracker.Service.Interfaces;
 
 
+import com.expense.tracker.DTO.ComparisonReportDTO;
 import com.expense.tracker.DTO.ReportDTO;
 import com.expense.tracker.DTO.SummaryDTO;
 import com.expense.tracker.DTO.TransactionDTO;
@@ -20,4 +21,5 @@ public interface TransactionService  {
         public SummaryDTO calculateSummary(LocalDate startDate, LocalDate endDate);
         public ReportDTO getMonthlyReport(int Year, int Month);
         public List<TransactionDTO> getTransactionsReport(LocalDate startDate, LocalDate endDate);
+        public ComparisonReportDTO getComparisonReport(LocalDate month1, LocalDate month2);
 }
