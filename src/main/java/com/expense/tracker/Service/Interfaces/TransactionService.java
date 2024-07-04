@@ -19,4 +19,5 @@ public interface TransactionService  {
         public void deleteTransaction(Long id);
         public SummaryDTO calculateSummary(LocalDate startDate, LocalDate endDate);
         public ReportDTO getMonthlyReport(int Year, int Month);
+        public List<TransactionDTO> getTransactionsReport(LocalDate startDate, LocalDate endDate);
 }

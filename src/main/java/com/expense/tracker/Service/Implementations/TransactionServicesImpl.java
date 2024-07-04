@@ -149,4 +149,24 @@ public class TransactionServicesImpl implements TransactionService {
         ReportModel reportModel = new ReportModel(totalIncome, totalExpenses, balance, categoryBreakdown);
         return ReportMapper.mapToReportDTO(reportModel);
     }
+
+    //Transaction Report
+    @Override
+    public List<TransactionDTO> getTransactionsReport(LocalDate startDate, LocalDate endDate) {
+
+        List<TransactionModel> transactionModel = transactionRepository.findBytransactionOnBetween(startDate, endDate);
+
+        if (transactionModel == null ){
+            throw new ResourceNotFound("Data is not available for the period you selected");
+        }
+
+
+        return transactionModel.stream()
+                .filter(t -> t.getMaincategory().equalsIgnoreCase("Expense"))
+                .map(TransactionMapper::mapToTransactionDTO)
+                .collect(Collectors.toList());
+
+    }
+
+
 }
