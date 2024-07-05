@@ -1,9 +1,13 @@
 package com.expense.tracker.Service.Implementations;
 
-import com.expense.tracker.DTO.TransactionDTO;
+import com.expense.tracker.DTO.*;
 import com.expense.tracker.Exception.ResourceNotFound;
+import com.expense.tracker.Mapper.ReportMapper;
+import com.expense.tracker.Mapper.SummaryMapper;
 import com.expense.tracker.Mapper.TransactionMapper;
 
+import com.expense.tracker.Model.ReportModel;
+import com.expense.tracker.Model.SummaryModel;
 import com.expense.tracker.Model.TransactionModel;
 import com.expense.tracker.Repository.TransactionRepository;
 import com.expense.tracker.Service.Interfaces.TransactionService;
@@ -12,7 +16,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -58,7 +62,7 @@ public class TransactionServicesImpl implements TransactionService {
 
         TransactionModel transactionModel=transactionRepository.findById(id).orElseThrow(()-> new ResourceNotFound("The transaction is not exist"+id));
 
-        transactionModel.setTransaction_date(updatedTransaction.getTransaction_date());
+        transactionModel.setTransactionOn(updatedTransaction.getTransactionOn());
         transactionModel.setDescription(updatedTransaction.getDescription());
         transactionModel.setAmount(updatedTransaction.getAmount());
         transactionModel.setPaidby(updatedTransaction.getPaidby());
@@ -77,6 +81,125 @@ public class TransactionServicesImpl implements TransactionService {
         //check if the transaction exisit or not
         TransactionModel transactionModel=transactionRepository.findById(id).orElseThrow(()-> new ResourceNotFound("The transaction is not exist"+id));
         transactionRepository.deleteById(id);
+    }
+
+    @Override
+    public SummaryDTO calculateSummary(LocalDate startDate, LocalDate endDate) {
+
+        List<TransactionModel> transactionModel = (List<TransactionModel>) transactionRepository.findBytransactionOnBetween(startDate, endDate);
+        if(transactionModel == null){
+            throw new RuntimeException("check the query as the values are empty");
+        }
+
+        double totalExpenses = transactionModel.stream()
+                .filter(t -> t.getMaincategory().equals("Expense"))
+                .mapToDouble(TransactionModel::getAmount).sum();
+
+
+        double totalIncome = transactionModel.stream()
+                .filter(t -> t.getMaincategory().equals("Income"))
+                .mapToDouble(TransactionModel::getAmount)
+                .sum();
+
+        double balance = totalIncome - totalExpenses;
+        System.out.println("Calculating summary from the query data");
+        System.out.print(totalIncome);System.out.print(totalExpenses);System.out.print(balance);
+
+        SummaryModel summaryModel = new SummaryModel(totalIncome, totalExpenses, balance);
+        summaryModel.settotalIncome(totalIncome);
+        summaryModel.setTotalExpense(totalExpenses);
+        summaryModel.setBalance(balance);
+
+        return SummaryMapper.mapToSummaryDTO(summaryModel);
+
+    }
+
+    @Override
+    public ReportDTO getMonthlyReport(int year, int month) {
+
+        if (month < 1 || month > 12) {
+            System.out.println("month is :"+month);
+            throw new ResourceNotFound("Invalid month data ");
+        }
+
+        LocalDate startDate = LocalDate.of(year, month, 1);
+        LocalDate endDate = startDate.withDayOfMonth(startDate.lengthOfMonth());
+
+        List<TransactionModel> transactions = transactionRepository.findBytransactionOnBetween(startDate, endDate);
+
+        double totalIncome = transactions.stream()
+                .filter(t -> t.getMaincategory().equalsIgnoreCase("income"))
+                .mapToDouble(TransactionModel::getAmount)
+                .sum();
+
+        double totalExpenses = transactions.stream()
+                .filter(t -> t.getMaincategory().equalsIgnoreCase("Expense"))
+                .mapToDouble(TransactionModel::getAmount)
+                .sum();
+
+        Map<String, Double> categoryBreakdown = transactions.stream()
+                .filter(t -> t.getMaincategory().equalsIgnoreCase("Expense"))
+                .collect(Collectors.groupingBy(TransactionModel::getSubcategory, Collectors.summingDouble(TransactionModel::getAmount)));
+
+        double balance = totalIncome-totalExpenses;
+
+        ReportModel reportModel = new ReportModel(totalIncome, totalExpenses, balance, categoryBreakdown);
+        return ReportMapper.mapToReportDTO(reportModel);
+    }
+
+    //Transaction Report
+    @Override
+    public List<TransactionDTO> getTransactionsReport(LocalDate startDate, LocalDate endDate) {
+
+        List<TransactionModel> transactionModel = transactionRepository.findBytransactionOnBetween(startDate, endDate);
+
+        if (transactionModel == null ){
+            throw new ResourceNotFound("Data is not available for the period you selected");
+        }
+
+
+        return transactionModel.stream()
+                .filter(t -> t.getMaincategory().equalsIgnoreCase("Expense"))
+                .map(TransactionMapper::mapToTransactionDTO)
+                .collect(Collectors.toList());
+
+    }
+
+    //Comparison Report
+
+    @Override
+    public ComparisonReportDTO getComparisonReport(LocalDate month1, LocalDate month2) {
+        LocalDate month1Start = month1.withDayOfMonth(1);
+        LocalDate month1End = month1.withDayOfMonth(month1.lengthOfMonth());
+
+        LocalDate month2Start = month2.withDayOfMonth(1);
+        LocalDate month2End = month2.withDayOfMonth(month2.lengthOfMonth());
+
+        List<TransactionModel> transactionsMonth1 = transactionRepository.findBytransactionOnBetween(month1Start, month1End);
+        List<TransactionModel> transactionsMonth2 = transactionRepository.findBytransactionOnBetween(month2Start, month2End);
+
+        Map<String, Double> categoryToAmountMonth1 = transactionsMonth1.stream()
+                .filter(t -> t.getMaincategory().equalsIgnoreCase("Expense"))
+                .collect(Collectors.groupingBy(TransactionModel::getSubcategory, Collectors.summingDouble(TransactionModel::getAmount)));
+
+        Map<String, Double> categoryToAmountMonth2 = transactionsMonth2.stream()
+                .filter(t -> t.getMaincategory().equalsIgnoreCase("Expense"))
+                .collect(Collectors.groupingBy(TransactionModel::getSubcategory, Collectors.summingDouble(TransactionModel::getAmount)));
+
+        Set<String> allCategories = new HashSet<>();
+        allCategories.addAll(categoryToAmountMonth1.keySet());
+        allCategories.addAll(categoryToAmountMonth2.keySet());
+
+        List<CategoryComparisonDTO> categoryComparisons = new ArrayList<>();
+        for (String category : allCategories) {
+            double month1Amount = categoryToAmountMonth1.getOrDefault(category, 0.0);
+            double month2Amount = categoryToAmountMonth2.getOrDefault(category, 0.0);
+            double difference = month2Amount - month1Amount;
+
+            categoryComparisons.add(new CategoryComparisonDTO(category, month1Amount, month2Amount, difference));
+        }
+
+        return new ComparisonReportDTO(categoryComparisons);
     }
 
 
